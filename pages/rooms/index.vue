@@ -77,7 +77,7 @@ export default {
                 return post.channelId === this.$store.getters['channel/currentChannel'].id
             })
         },
-        // 未使用
+        // unused yet
         latestPost() {
             return console.log(this.posts[this.posts.length - 1])
         }
@@ -89,7 +89,7 @@ export default {
         },
         saySomething() {
 
-            // when they have not select a channel
+            // when they have not selected a channel
             if (this.$store.getters['channel/currentChannel'].id === undefined) {
                 return alert('select a channel')
             }
@@ -103,16 +103,16 @@ export default {
                 channelId: this.$store.getters['channel/currentChannel'].id
             }
 
-            // when there is a file with post
+            // when there is a file, put file property to the post
             if (this.file) {
                 storage.child(`images/${this.fileName}`).put(this.file)
                 .then(() => {
                     storage.child(`images/${this.fileName}`).getDownloadURL()
                     .then(url => {
                         post.file = url
-
                         db.collection('posts').doc(id).set(post)
                         .then(() => {
+
                             this.file = null
                             this.fileName = null
                         })
@@ -153,26 +153,27 @@ export default {
 
         db.collection("posts").orderBy('time').onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
+
                 if (change.type === "added") {
-                    console.log("Added: ")
                     this.posts.push(change.doc.data())
 
+                    // lively channel alert
                     this.$store.dispatch('channel/livelyChannel', change.doc.data().channelId)
-                    
                     setTimeout(() => {
                         this.$store.dispatch('channel/livelyChannel', null)
-                    }, 2200)
+                    }, 3200)
 
-                    setTimeout(() => {
-                        this.scroll()
-                    }, 1000)
+                    // scroll
+                    if (change.doc.data().channelId === this.$store.getters['channel/currentChannel'].id) {
+                        setTimeout(() => {
+                            this.scroll()
+                        }, 1000)
+                    }
                 }
 
                 if (change.type === "modified") {
-                    console.log("Modified: ")
                 }
                 if (change.type === "removed") {
-                    console.log("Removed: ")
                 }
             });
         });
@@ -344,10 +345,7 @@ export default {
 }
 
 
-
-
-
-/* Animation */
+/* list animation */
 .v-enter {
     transform: translateY(-15px);
     opacity: 0;

@@ -59,7 +59,18 @@ export default {
         },
         deleteChannel(channel) {
             if (confirm(`Delete ${channel.name} channel, are you ok?`) ) {
+                // delete channel
                 db.collection('rooms').doc(channel.id).delete()
+
+                // delete posts that belongs to the channel
+                db.collection('posts').get()
+                .then(res => {
+                    res.forEach(post => {
+                        if (post.data().channelId === channel.id) {
+                            db.collection('posts').doc(post.id).delete()
+                        }
+                    })
+                })
             }
         },
         currentChannel(channel) {
@@ -77,12 +88,12 @@ export default {
         db.collection("rooms").onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
                 if (change.type === "added") {
-                    console.log("added")
                     this.channels.unshift(change.doc.data())
                 }
+
                 if (change.type === "modified") {
-                    console.log("Modified")
                 }
+                
                 if (change.type === "removed") {
                     this.channels = this.channels.filter(channel => {
                         return channel.id !== change.doc.data().id
@@ -139,7 +150,7 @@ export default {
             }
 
             &.lively-channel {
-                animation: lively-channel 1s 2;
+                animation: lively-channel 1s 3;
             }
 
             &:last-of-type {
