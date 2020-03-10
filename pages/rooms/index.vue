@@ -7,7 +7,7 @@
 
             <div class="main-board">
                 <div class="posts">
-                    <transition-group tag="ul" class="post-list">
+                    <transition-group tag="ul" class="post-list" v-if="filteredPosts.length > 0">
                         <li class="post-list-item" :class="{ 'mine': myPost(post)}" v-for="post in filteredPosts" :key="post.id">
                             <div class="post-info">
                                 <p class="post-info-name">
@@ -16,13 +16,18 @@
                                 </p>
                             </div>
                             <div class="post-body">
-                                <p>
-                                    <img v-if="post.file" :src="post.file" width="150">
+                                <p class="post-body-image">
+                                    <img v-if="post.file" :src="post.file">
                                 </p>
                                 <p class="post-body-content">{{ post.content }}</p>
                             </div>
                         </li>
                     </transition-group>
+
+                    <p v-else class="post-list no-posts">
+                        <img src="/images/noposts2.png">
+                    </p>
+
                 </div>
 
                 <form class="form" @submit.prevent="saySomething">
@@ -60,7 +65,7 @@ export default {
     },
     data() {
         return {
-            content: null,
+            content: '',
             file: null,
             fileName: null,
             posts: [],
@@ -121,10 +126,13 @@ export default {
 
             // when there is no file
             } else {
+                if (this.content.trim().length === 0) {
+                    return alert('say something')
+                }
                 db.collection('posts').doc(id).set(post)
             }
 
-            this.content = null
+            this.content = ''
             
         },
         myPost(post) {
@@ -230,8 +238,18 @@ export default {
                             &-content {
                                 word-wrap: break-word;
                             }
+                            &-image {
+                                img {
+                                    width: 15rem;
+                                }
+                            }
                         }
                     }
+                }
+
+                .no-posts {
+                    transform: translateX(25%) translateY(15%);
+                    display: block;
                 }
             }
             

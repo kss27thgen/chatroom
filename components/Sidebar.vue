@@ -10,7 +10,7 @@
 
         <transition-group class="channels" tag="ul">
             <li v-for="channel in channels" :key="channel.id" class="channel" :class="{'current-channel': currentChannel(channel), 'lively-channel': channel.id === $store.getters['channel/livelyChannel']}">
-                <p class="channel-name" @click="setChannel(channel)"># {{ channel.name }}</p>
+                <p class="channel-name" @click="setCurrentChannel(channel)"># {{ channel.name }}</p>
                 <button class="channel-times" @click="deleteChannel(channel)">
                     <font-awesome-icon :icon="['fas', 'times']" />
                 </button>
@@ -50,7 +50,7 @@ export default {
                 this.channelName = ''
             })
         },
-        setChannel(channel) {
+        setCurrentChannel(channel) {
             this.$store.dispatch('channel/setCurrentChannel', channel)
 
             setTimeout(() => {
@@ -93,7 +93,7 @@ export default {
 
                 if (change.type === "modified") {
                 }
-                
+
                 if (change.type === "removed") {
                     this.channels = this.channels.filter(channel => {
                         return channel.id !== change.doc.data().id
