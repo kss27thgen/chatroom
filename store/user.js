@@ -4,7 +4,9 @@ export const state = () => ({
     currentUser: null
 });
 
-export const getters = {};
+export const getters = {
+    currentUser: state => state.currentUser
+};
 
 export const actions = {
     setCurrentUser({ commit }, user) {
