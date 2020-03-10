@@ -38,6 +38,9 @@ export default {
             if (this.channels.length >= 7) {
                 return this.feedback = 'We can only have 7 channels.'
             }
+            if (this.channelName.trim().length === 0) {
+                return this.feedback = 'Invalid channel name'
+            }
             const id = uuidv4()
             db.collection('rooms').doc(id).set({
                 name: this.channelName,
@@ -49,6 +52,10 @@ export default {
         },
         setChannel(channel) {
             this.$store.dispatch('channel/setCurrentChannel', channel)
+
+            setTimeout(() => {
+                this.scroll()
+            }, 1000)
         },
         deleteChannel(channel) {
             if (confirm('Are you ok?') ) {
@@ -57,11 +64,16 @@ export default {
         },
         currentChannel(channel) {
             return channel.id === this.$store.getters['channel/currentChannel'].id
+        },
+        scroll() {
+            let scrollHeight = document.querySelector('.post-list').offsetHeight;
+            document.querySelector('.posts').scroll({
+                top: scrollHeight,
+                behavior: 'smooth'
+            });
         }
     },
     mounted() {
-        console.log(process.env.API_KEY);
-
         db.collection("rooms").onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
                 if (change.type === "added") {
@@ -139,7 +151,7 @@ export default {
                 width: 20%;
                 font-size: 2.5rem;
                 cursor: pointer;
-                background: var(--color-gray);
+                background: var(--color-lightgray);
                 color: var(--color-white);
                 border: 1px solid var(--color-white);
                 outline: none;

@@ -49,7 +49,11 @@ export default {
       {
         /* module options */
       }
-    ]
+    ],
+
+    ['nuxt-lazy-load', {
+      defaultImage: '/images/default.gif',
+    }]
   ],
 
   fontawesome: {

@@ -26,6 +26,15 @@ html {
   padding: 0;
 }
 
+ul {
+	list-style: none;
+}
+
+a {
+	text-decoration: none;
+	color: #222;
+}
+
 /* page transition */
 /* .page-enter, .page-leave-active {
 	opacity: 0;

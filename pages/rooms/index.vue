@@ -6,21 +6,36 @@
             <Sidebar class="sidebar" />
 
             <div class="main-board">
-                <div class="list">
-
+                <div class="posts">
+                    <transition-group tag="ul" class="post-list">
+                        <li class="post-list-item" :class="{ 'mine': myPost(post)}" v-for="post in filteredPosts" :key="post.id">
+                            <div class="post-info">
+                                <p class="post-info-name">
+                                    {{ post.name }}
+                                    <span class="post-info-time">({{ post.time | moment }})</span>
+                                </p>
+                            </div>
+                            <div class="post-body">
+                                <p>
+                                    <img v-if="post.file" :src="post.file" width="150">
+                                </p>
+                                <p>{{ post.content }}</p>
+                            </div>
+                        </li>
+                    </transition-group>
                 </div>
 
-                <form class="form">
+                <form class="form" @submit.prevent="saySomething">
                     <div class="input-group">
-                        <input type="text">
+                        <input type="text" v-model="content" placeholder="say something.." class="input-content">
                         <div class="camera-group">
                             <label for="camera">
                                 <font-awesome-icon :icon="['fas', 'camera']" class="icon icon-camera" /> 
                             </label>
-                            <input type="file" id="camera" style="display:none;">
+                            <input type="file" id="camera" style="display:none;" @change="selectFile">
                         </div>
                     </div>
-                    <button class="button-comment">
+                    <button class="button-comment" type="submit">
                         <font-awesome-icon :icon="['far', 'comment-dots']" /> 
                     </button>
                 </form>
@@ -34,6 +49,9 @@
 <script>
 import Select from '@/components/Select'
 import Sidebar from '@/components/Sidebar'
+import { db, storage } from '~/plugins/firebase'
+import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment'
 
 export default {
     components: {
@@ -42,16 +60,106 @@ export default {
     },
     data() {
         return {
-
+            content: '',
+            file: null,
+            fileName: null,
+            posts: [],
+        }
+    },
+    filters: {
+        moment(value) {
+            return moment(value).fromNow()
+        }
+    },
+    computed: {
+        filteredPosts() {
+            return this.posts.filter(post => {
+                return post.channelId === this.$store.getters['channel/currentChannel'].id
+            })
         }
     },
     methods: {
+        selectFile() {
+            this.file = event.target.files[0]
+            this.fileName = event.target.files[0].name
+        },
+        saySomething() {
+
+            // when they have not select a channel
+            if (this.$store.getters['channel/currentChannel'].id === undefined) {
+                return alert('select a channel')
+            }
+
+            const id = uuidv4()
+            const post = {
+                id: id,
+                name: this.$store.getters['user/currentUser'].name,
+                content: this.content,
+                time: Date.now(),
+                channelId: this.$store.getters['channel/currentChannel'].id
+            }
+
+            // when there is a file with post
+            if (this.file) {
+                storage.child(`images/${this.fileName}`).put(this.file)
+                .then(() => {
+                    storage.child(`images/${this.fileName}`).getDownloadURL()
+                    .then(url => {
+                        post.file = url
+
+                        db.collection('posts').doc(id).set(post)
+                    })
+                })
+
+            // when there is no file
+            } else {
+                db.collection('posts').doc(id).set(post)
+            }
+
+            this.content = ''
+        },
+        myPost(post) {
+            return post.name === this.$store.getters['user/currentUser'].name
+        },
+        scroll() {
+            let scrollHeight = document.querySelector('.post-list').offsetHeight;
+            document.querySelector('.posts').scroll({
+                top: scrollHeight,
+                behavior: 'smooth'
+            });
+        }
 
     },
+    created() {
+        
+    },
     mounted() {
+        if (!localStorage.getItem('nn')) {
+            return this.$router.push('/')
+        }
         this.$store.dispatch('user/setCurrentUser', {
             name: localStorage.getItem('nn')
         })
+
+
+        db.collection("posts").orderBy('time').onSnapshot(snapshot => {
+            snapshot.docChanges().forEach(change => {
+                if (change.type === "added") {
+                    console.log("Added: ")
+                    this.posts.push(change.doc.data())
+
+                    setTimeout(() => {
+                        this.scroll()
+                    }, 1000)
+                }
+                if (change.type === "modified") {
+                    console.log("Modified: ")
+                }
+                if (change.type === "removed") {
+                    console.log("Removed: ")
+                }
+            });
+        });
     }
 }
 </script>
@@ -66,10 +174,48 @@ export default {
         }
 
         .main-board {
-            .list {
-                height: 100%;
-                border-left: 10px dotted var(--color-yellow);
+            width: 100%;
+            .posts {
+                height:100vh;
+                border-left: none;
+                padding: 3rem;
+                overflow: scroll;
+                padding-bottom: 13rem;
+
+                .post-list {
+                    display: flex;
+                    flex-direction: column;
+
+                    &-item {
+                        margin-top: 2rem;
+                        padding: 1rem 2rem;
+                        border-bottom: 1px solid var(--color-lightgray);
+                        font-size: 2rem;
+                        width: 60%;
+                        &.mine {
+                            align-self: flex-end;
+                        }
+
+                        .post-info {
+                            &-name {
+                                font-family: fantasy;
+                                font-size: 3rem;
+                            }
+                            &-time {
+                                font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',Roboto, 'Helvetica Neue', Arial, sans-serif;
+                                font-size: 1.4rem;
+                            }
+                        }
+
+                        .post-body {
+
+                        }
+                    }
+                }
             }
+            
+            
+
             .form {
                 position: fixed;
                 bottom: 0;
@@ -127,6 +273,9 @@ export default {
             }
             .main-board {
                 width: 65%;
+                .posts {
+                    border-left: 10px dotted var(--color-yellow);
+                }
                 .form {
                     width: 65%;
                 }
@@ -173,4 +322,23 @@ export default {
         }
     }
 }
+
+
+
+
+
+/* Animation */
+.v-enter {
+    transform: translateY(-15px);
+    opacity: 0;
+}
+.v-enter-active {
+    transition: all 1s;
+}
+
+.v-move {
+    transition: all .5s;
+}
+
+
 </style>
