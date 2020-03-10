@@ -8,14 +8,14 @@
         </form>
         <p v-if="feedback" class="feedback">{{ feedback }}</p>
 
-        <ul class="channels">
-            <li v-for="channel in channels" :key="channel.id" class="channel" :class="{'current-channel': currentChannel(channel)}">
-                <p class="channel-name" @click="setChannel(channel)">{{ channel.name }}</p>
+        <transition-group class="channels" tag="ul">
+            <li v-for="channel in channels" :key="channel.id" class="channel" :class="{'current-channel': currentChannel(channel), 'lively-channel': channel.id === $store.getters['channel/livelyChannel']}">
+                <p class="channel-name" @click="setChannel(channel)"># {{ channel.name }}</p>
                 <button class="channel-times" @click="deleteChannel(channel)">
                     <font-awesome-icon :icon="['fas', 'times']" />
                 </button>
             </li>
-        </ul>
+        </transition-group>
     </div>
 </template>
 
@@ -58,7 +58,7 @@ export default {
             }, 1000)
         },
         deleteChannel(channel) {
-            if (confirm('Are you ok?') ) {
+            if (confirm(`Delete ${channel.name} channel, are you ok?`) ) {
                 db.collection('rooms').doc(channel.id).delete()
             }
         },
@@ -78,7 +78,7 @@ export default {
             snapshot.docChanges().forEach(change => {
                 if (change.type === "added") {
                     console.log("added")
-                    this.channels.push(change.doc.data())
+                    this.channels.unshift(change.doc.data())
                 }
                 if (change.type === "modified") {
                     console.log("Modified")
@@ -138,6 +138,10 @@ export default {
                 font-weight: bold;
             }
 
+            &.lively-channel {
+                animation: lively-channel 1s 2;
+            }
+
             &:last-of-type {
                 border: none;
             }
@@ -160,4 +164,29 @@ export default {
     }
 }
 
+.v-enter {
+    opacity: 1;
+    transform: translateX(-1rem) translateY(-2rem) scale(1.3);
+
+}
+.v-enter-active {
+    opacity: 0;
+    transition: all 1s;
+
+}
+
+.v-move {
+    transition: all .6s;
+}
+
+
+@keyframes lively-channel {
+    from {
+        background: pink;
+        color: white;
+    }
+    to {
+        background: var(--color-white);
+    }
+}
 </style>

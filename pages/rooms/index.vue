@@ -19,7 +19,7 @@
                                 <p>
                                     <img v-if="post.file" :src="post.file" width="150">
                                 </p>
-                                <p>{{ post.content }}</p>
+                                <p class="post-body-content">{{ post.content }}</p>
                             </div>
                         </li>
                     </transition-group>
@@ -60,7 +60,7 @@ export default {
     },
     data() {
         return {
-            content: '',
+            content: null,
             file: null,
             fileName: null,
             posts: [],
@@ -76,6 +76,10 @@ export default {
             return this.posts.filter(post => {
                 return post.channelId === this.$store.getters['channel/currentChannel'].id
             })
+        },
+        // 未使用
+        latestPost() {
+            return console.log(this.posts[this.posts.length - 1])
         }
     },
     methods: {
@@ -108,6 +112,10 @@ export default {
                         post.file = url
 
                         db.collection('posts').doc(id).set(post)
+                        .then(() => {
+                            this.file = null
+                            this.fileName = null
+                        })
                     })
                 })
 
@@ -116,7 +124,8 @@ export default {
                 db.collection('posts').doc(id).set(post)
             }
 
-            this.content = ''
+            this.content = null
+            
         },
         myPost(post) {
             return post.name === this.$store.getters['user/currentUser'].name
@@ -148,10 +157,17 @@ export default {
                     console.log("Added: ")
                     this.posts.push(change.doc.data())
 
+                    this.$store.dispatch('channel/livelyChannel', change.doc.data().channelId)
+                    
+                    setTimeout(() => {
+                        this.$store.dispatch('channel/livelyChannel', null)
+                    }, 2200)
+
                     setTimeout(() => {
                         this.scroll()
                     }, 1000)
                 }
+
                 if (change.type === "modified") {
                     console.log("Modified: ")
                 }
@@ -191,7 +207,7 @@ export default {
                         padding: 1rem 2rem;
                         border-bottom: 1px solid var(--color-lightgray);
                         font-size: 2rem;
-                        width: 60%;
+                        width: 65%;
                         &.mine {
                             align-self: flex-end;
                         }
@@ -199,7 +215,7 @@ export default {
                         .post-info {
                             &-name {
                                 font-family: fantasy;
-                                font-size: 3rem;
+                                font-size: 2.5rem;
                             }
                             &-time {
                                 font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI',Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -208,7 +224,11 @@ export default {
                         }
 
                         .post-body {
-
+                            margin-top: 1rem;
+                            padding-left: 1rem;
+                            &-content {
+                                word-wrap: break-word;
+                            }
                         }
                     }
                 }
@@ -333,11 +353,11 @@ export default {
     opacity: 0;
 }
 .v-enter-active {
-    transition: all 1s;
+    transition: all 2s;
 }
 
 .v-move {
-    transition: all .5s;
+    transition: all 1s;
 }
 
 
