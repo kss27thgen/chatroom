@@ -11,9 +11,9 @@
             <font-awesome-icon :icon="['fas', 'chevron-circle-up']" class="icon-minus" @click="closeModal" /> 
 
             <form class="form">
-                <h4 class="form-title">Make room</h4>
+                <h4 class="form-title">create channel</h4>
                 <div class="form-group">
-                    <input type="text" placeholder="Room name">
+                    <input type="text" placeholder="channel name">
                     <button type="submit">
                         <font-awesome-icon :icon="['fas', 'plus']" />
                     </button>
@@ -84,6 +84,7 @@ export default {
         border-radius: 4px;
         transition: .5s;
         padding: 3rem 1rem 1rem;
+        background: var(--color-white);
         &.active {
             top: 10%;
         }
@@ -130,7 +131,7 @@ export default {
         bottom: 0;
         left: 0;
         right: 0;
-        background: rgba(255, 255, 255, 0.884);
+        background: rgba(255, 255, 255, 0.705);
         transition: .5s;
         &.active {
             z-index: 3;

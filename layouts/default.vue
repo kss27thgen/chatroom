@@ -36,14 +36,14 @@ a {
 }
 
 /* page transition */
-/* .page-enter, .page-leave-active {
+.page-enter, .page-leave-active {
 	opacity: 0;
 	transform: translateY(1rem);
 }
 .page-enter-active,
 .page-leave-active {
 	transition: all .5s;
-} */
+}
 
 :root {
 	--color-white: #fff;

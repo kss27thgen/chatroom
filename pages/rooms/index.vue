@@ -7,7 +7,7 @@
 
             <div class="main-board">
                 <div class="posts">
-                    <transition-group tag="ul" class="post-list">
+                    <transition-group tag="ul" class="post-list" v-if="filteredPosts.length > 0">
                         <li class="post-list-item" :class="{ 'mine': myPost(post)}" v-for="post in filteredPosts" :key="post.id">
                             <div class="post-info">
                                 <p class="post-info-name">
@@ -16,13 +16,18 @@
                                 </p>
                             </div>
                             <div class="post-body">
-                                <p>
-                                    <img v-if="post.file" :src="post.file" width="150">
+                                <p class="post-body-image">
+                                    <img v-if="post.file" :src="post.file">
                                 </p>
                                 <p class="post-body-content">{{ post.content }}</p>
                             </div>
                         </li>
                     </transition-group>
+
+                    <p v-else class="post-list no-posts">
+                        <img src="/images/noposts2.png">
+                    </p>
+
                 </div>
 
                 <form class="form" @submit.prevent="saySomething">
@@ -60,7 +65,7 @@ export default {
     },
     data() {
         return {
-            content: null,
+            content: '',
             file: null,
             fileName: null,
             posts: [],
@@ -77,7 +82,7 @@ export default {
                 return post.channelId === this.$store.getters['channel/currentChannel'].id
             })
         },
-        // 未使用
+        // unused yet
         latestPost() {
             return console.log(this.posts[this.posts.length - 1])
         }
@@ -89,11 +94,12 @@ export default {
         },
         saySomething() {
 
-            // when they have not select a channel
+            // when they have not selected a channel
             if (this.$store.getters['channel/currentChannel'].id === undefined) {
                 return alert('select a channel')
             }
 
+            // create a post object
             const id = uuidv4()
             const post = {
                 id: id,
@@ -103,16 +109,16 @@ export default {
                 channelId: this.$store.getters['channel/currentChannel'].id
             }
 
-            // when there is a file with post
+            // when there is a file, put file property to the post
             if (this.file) {
                 storage.child(`images/${this.fileName}`).put(this.file)
                 .then(() => {
                     storage.child(`images/${this.fileName}`).getDownloadURL()
                     .then(url => {
                         post.file = url
-
                         db.collection('posts').doc(id).set(post)
                         .then(() => {
+
                             this.file = null
                             this.fileName = null
                         })
@@ -121,10 +127,13 @@ export default {
 
             // when there is no file
             } else {
+                if (this.content.trim().length === 0) {
+                    return alert('say something')
+                }
                 db.collection('posts').doc(id).set(post)
             }
 
-            this.content = null
+            this.content = ''
             
         },
         myPost(post) {
@@ -153,26 +162,27 @@ export default {
 
         db.collection("posts").orderBy('time').onSnapshot(snapshot => {
             snapshot.docChanges().forEach(change => {
+
                 if (change.type === "added") {
-                    console.log("Added: ")
                     this.posts.push(change.doc.data())
 
+                    // lively channel alert
                     this.$store.dispatch('channel/livelyChannel', change.doc.data().channelId)
-                    
                     setTimeout(() => {
                         this.$store.dispatch('channel/livelyChannel', null)
-                    }, 2200)
+                    }, 3200)
 
-                    setTimeout(() => {
-                        this.scroll()
-                    }, 1000)
+                    // scroll
+                    if (change.doc.data().channelId === this.$store.getters['channel/currentChannel'].id) {
+                        setTimeout(() => {
+                            this.scroll()
+                        }, 1000)
+                    }
                 }
 
                 if (change.type === "modified") {
-                    console.log("Modified: ")
                 }
                 if (change.type === "removed") {
-                    console.log("Removed: ")
                 }
             });
         });
@@ -229,8 +239,18 @@ export default {
                             &-content {
                                 word-wrap: break-word;
                             }
+                            &-image {
+                                img {
+                                    width: 15rem;
+                                }
+                            }
                         }
                     }
+                }
+
+                .no-posts {
+                    transform: translateX(25%) translateY(15%);
+                    display: block;
                 }
             }
             
@@ -344,10 +364,7 @@ export default {
 }
 
 
-
-
-
-/* Animation */
+/* list animation */
 .v-enter {
     transform: translateY(-15px);
     opacity: 0;
