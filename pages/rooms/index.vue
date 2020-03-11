@@ -99,6 +99,7 @@ export default {
                 return alert('select a channel')
             }
 
+            // create a post object
             const id = uuidv4()
             const post = {
                 id: id,
